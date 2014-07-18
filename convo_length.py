@@ -8,41 +8,43 @@ import requests # The urllib2 module is bad, this is better.
 
 
 # First get all discussions
-base_url = "https://internet-party.loomio.org"
-r = requests.get(base_url)
-page = r.text
-soup = BeautifulSoup(page)
+base_url = "https://internet-party.loomio.org/"
 
-titles = [t.text for t in soup.find_all('div', {'class':'discussion-title'})]
-links = soup.find_all('a', {'class': 'selector-discussion-link'})
+# For now hardcode page_num, don't know how to get total
+# For pages: base_url + "?page=" + page_num
 
-print "DISCUSSION_TITLE\tDISCUSSION_LINK\tNUM_TEXTS\tWORD_COUNT"
-    
-for title, link in zip(titles, links):
-    discussion_url = link.get('href')
-    r = requests.get(base_url + discussion_url)
+TOTAL_PGS = 16
+for i in range(1, TOTAL_PGS): 
+    r = requests.get(base_url + "?page=" + str(i))
     page = r.text
     soup = BeautifulSoup(page)
 
-    # Count the number of activities on this topic
-    responses = soup.find_all('li', {'class': 'activity-tem-container'})
-    num_responses = len(responses) 
+    titles = [t.text for t in soup.find_all('div', {'class':'discussion-title'})]
+    links = soup.find_all('a', {'class': 'selector-discussion-link'})
 
-    # Count the number of text replies to this topic
-    text_responses = soup.find_all('span', {'class': 'activity-item-content word-break'})
-    texts = [t.text for t in text_responses if t.text]
-    num_texts = len(texts)
+    print "DISCUSSION_TITLE\tDISCUSSION_LINK\tNUM_TEXTS\tWORD_COUNT"
+        
+    for title, link in zip(titles, links):
+        discussion_url = link.get('href')
+        r = requests.get(base_url + discussion_url)
+        page = r.text
+        soup = BeautifulSoup(page)
 
-    # Count the total length of text replies
-    word_count = sum([len(t.split()) for t in texts])
+        # Count the number of activities on this topic
+        responses = soup.find_all('li', {'class': 'activity-tem-container'})
+        num_responses = len(responses) 
 
-    # ORG DISCUSSION_TITLE DISCUSSION_LINK NUM_TEXTS WORD_COUNT
-    print str(base_url) + "\t" + str(title) + "\t" + \
-        str(discussion_url) + "\t" + str(num_texts) + \
-        "\t" + str(word_count)
+        # Count the number of text replies to this topic
+        text_responses = soup.find_all('span',
+            {'class': 'activity-item-content word-break'})
+        texts = [t.text for t in text_responses if t.text]
+        num_texts = len(texts)
 
-# ISSUE: WE ONLY GET THE FIRST PAGE OF CONVERSATIONS ON THE 
-# ORG HOMEPAGE
+        # Count the total length of text replies
+        word_count = sum([len(t.split()) for t in texts])
 
-
+        # ORG DISCUSSION_TITLE DISCUSSION_LINK NUM_TEXTS WORD_COUNT
+        print str(base_url) + "\t" + str(title) + "\t" + \
+            str(discussion_url) + "\t" + str(num_texts) + \
+            "\t" + str(word_count)
 
